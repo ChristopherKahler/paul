@@ -11,7 +11,8 @@
     "src/templates",
     "src/references",
     "src/workflows",
-    "src/rules"
+    "src/rules",
+    "src/hooks"
   ],
   "keywords": [
     "claude",

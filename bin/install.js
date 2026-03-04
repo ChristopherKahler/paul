@@ -77,6 +77,7 @@ if (hasHelp) {
   ${yellow}What gets installed:${reset}
     commands/paul/     - Slash commands (/paul:init, /paul:plan, etc.)
     paul-framework/    - Templates, workflows, references, rules
+    hooks/             - Statusline showing context window usage
 `);
   process.exit(0);
 }
@@ -114,6 +115,45 @@ function copyWithPathReplacement(srcDir, destDir, pathPrefix) {
       fs.copyFileSync(srcPath, destPath);
     }
   }
+}
+
+/**
+ * Configure statusline in settings.json (or settings.local.json for local installs)
+ */
+function configureStatusline(claudeDir, isGlobal) {
+  const settingsFile = isGlobal
+    ? path.join(claudeDir, 'settings.json')
+    : path.join(claudeDir, 'settings.local.json');
+
+  const hookRelPath = isGlobal
+    ? path.join(claudeDir, 'hooks', 'paul-statusline.js')
+    : '.claude/hooks/paul-statusline.js';
+
+  const command = `node ${hookRelPath}`;
+
+  let settings = {};
+  if (fs.existsSync(settingsFile)) {
+    try {
+      settings = JSON.parse(fs.readFileSync(settingsFile, 'utf8'));
+    } catch (e) {}
+  }
+
+  // Check if statusLine is already configured by another tool
+  if (settings.statusLine) {
+    const existing = settings.statusLine.command || '';
+    if (!existing.includes('paul-statusline')) {
+      console.log(`  ${yellow}!${reset} Existing statusLine found (${dim}${existing}${reset}), skipping`);
+      return;
+    }
+  }
+
+  settings.statusLine = {
+    type: 'command',
+    command: command,
+  };
+
+  fs.writeFileSync(settingsFile, JSON.stringify(settings, null, 2) + '\n');
+  console.log(`  ${green}✓${reset} Configured statusline in ${dim}${path.basename(settingsFile)}${reset}`);
 }
 
 /**
@@ -161,6 +201,21 @@ function install(isGlobal) {
     }
   }
   console.log(`  ${green}✓${reset} Installed paul-framework`);
+
+  // Install hooks (statusline)
+  const hooksSrc = path.join(src, 'src', 'hooks');
+  if (fs.existsSync(hooksSrc)) {
+    const hooksDest = path.join(claudeDir, 'hooks');
+    fs.mkdirSync(hooksDest, { recursive: true });
+    const hookFiles = fs.readdirSync(hooksSrc);
+    for (const file of hookFiles) {
+      fs.copyFileSync(path.join(hooksSrc, file), path.join(hooksDest, file));
+    }
+    console.log(`  ${green}✓${reset} Installed hooks`);
+  }
+
+  // Configure statusline in settings
+  configureStatusline(claudeDir, isGlobal);
 
   console.log(`
   ${green}Done!${reset} Launch Claude Code and run ${cyan}/paul:help${reset}.
