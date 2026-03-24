@@ -58,21 +58,59 @@ PLAN ──▶ APPLY ──▶ UNIFY
 
 **Activities:**
 1. Read PLAN.md to load task definitions
-2. For each task:
-   - Execute the action
-   - Run verification
-   - Record result (pass/fail)
-   - Stop at checkpoints, wait for human
-3. Handle blockers by documenting and notifying
-4. Track deviations from plan
+2. For each auto task, follow the Execute/Qualify (E/Q) loop:
+   - **Execute** the action
+   - **Report status** (DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED)
+   - **Qualify** against spec and linked AC (re-read output, run verify fresh, compare)
+   - Score: PASS / GAP / DRIFT — loop on gaps until resolved
+3. Stop at checkpoints, wait for human
+4. On checkpoint failure: classify root cause (intent/spec/code) before fixing
+5. Track deviations from plan
+
+### Task Execution Statuses
+
+After executing each task, report one of four statuses before qualification:
+
+| Status | Meaning | What Happens Next |
+|---|---|---|
+| **DONE** | Task completed, no concerns | Standard qualify check against spec + AC |
+| **DONE_WITH_CONCERNS** | Completed but have doubts | Qualify focuses on flagged concerns first, then full check |
+| **NEEDS_CONTEXT** | Can't complete — missing information | Pause execution. Surface what's missing. Wait for user input |
+| **BLOCKED** | Can't complete — structural impediment | Stop. Report what was attempted, what's blocking, what help is needed |
+
+**Rules:**
+- NEVER silently produce work you're unsure about — instead report DONE_WITH_CONCERNS, because pretending confidence when you have doubts produces work that fails during verification or in production
+- NEEDS_CONTEXT is not failure — it's honest communication that prevents wasted work on wrong assumptions
+- BLOCKED must include specifics — instead of a vague "I'm stuck", because specificity enables the user to unblock you efficiently
+
+### Execute/Qualify (E/Q) Loop
+
+Every auto task follows the E/Q loop:
+
+```
+EXECUTE → REPORT STATUS → QUALIFY → (fix gaps) → NEXT TASK
+```
+
+The Qualify step independently verifies output against the spec — instead of trusting execution memory, because the implementer's report of their own work is inherently optimistic. Qualify re-reads the actual files, runs verify commands fresh, and compares line-by-line against the task spec and linked AC.
+
+Qualify scores each task: **PASS** (matches spec), **GAP** (missing something), or **DRIFT** (built something different). GAP and DRIFT trigger a fix-and-requalify loop (max 3 attempts before escalating to user).
+
+### Diagnostic Failure Routing
+
+When a checkpoint:human-verify fails, classify before fixing:
+- **Intent issue** → re-plan the phase with updated intent
+- **Spec issue** → fix the plan (ACs/tasks) before patching code
+- **Code issue** → standard fix-in-place
+
+This prevents the anti-pattern of patching code when the plan itself was wrong.
 
 **Entry Condition:**
 - PLAN.md exists and is approved
 - STATE.md shows loop position at PLAN complete
 
 **Exit Condition:**
-- All tasks completed (or blocked with documentation)
-- All verifications passed
+- All tasks completed with PASS qualify status (or blocked with documentation)
+- All checkpoint verifications resolved
 - Ready for reconciliation
 
 **Loop Position:**

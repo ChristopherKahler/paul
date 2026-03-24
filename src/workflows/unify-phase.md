@@ -28,15 +28,19 @@ Next phase: PLAN (next plan or next phase)
 <process>
 
 <step name="gather_results" priority="first">
-1. Recall execution from APPLY phase:
-   - Which tasks completed successfully
-   - Which tasks failed (if any)
-   - Which checkpoints were resolved and how
-   - Any deviations from the plan
-2. Read PLAN.md to refresh:
+1. Read PLAN.md to refresh:
    - Original acceptance criteria
    - Expected outputs
    - Task definitions
+2. **Detect plan track:**
+   - If PLAN.md has no `<boundaries>` section AND has a single task → `is_quick_fix = true`
+   - Otherwise → `is_quick_fix = false`
+3. Recall execution from APPLY phase:
+   - Which tasks completed successfully (with qualify results if E/Q was active)
+   - Which tasks failed (if any)
+   - Which checkpoints were resolved and how
+   - Any deviations from the plan
+   - Escalation statuses used (DONE_WITH_CONCERNS, NEEDS_CONTEXT, BLOCKED)
 </step>
 
 <step name="compare_plan_vs_actual">
@@ -85,8 +89,43 @@ Next phase: PLAN (next plan or next phase)
 </step>
 
 <step name="create_summary">
-1. Create SUMMARY.md at `.paul/phases/{phase}/{plan}-SUMMARY.md`
-2. Include:
+Create SUMMARY.md at `.paul/phases/{phase}/{plan}-SUMMARY.md`
+
+**If `is_quick_fix = true` — compressed SUMMARY:**
+
+```markdown
+---
+phase: NN-name
+plan: NN
+completed: ISO timestamp
+duration: Xmin
+---
+
+# Phase [X] Plan [Y]: [Name] Summary
+
+**[One-liner: what changed]**
+
+## AC Result
+
+| Criterion | Status |
+|-----------|--------|
+| AC-1: [Name] | Pass / Fail |
+
+## Files Changed
+
+| File | Change |
+|------|--------|
+| [path] | [Created/Modified — brief] |
+
+---
+*Completed: [date]*
+```
+
+Skip: detailed deviations, decisions, next-phase-readiness, issues, performance metrics, task commits. The quick-fix loop is lightweight end-to-end.
+
+**If `is_quick_fix = false` — full SUMMARY:**
+
+Include all standard sections:
 
    **Frontmatter:**
    ```yaml

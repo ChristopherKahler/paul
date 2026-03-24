@@ -1,5 +1,5 @@
 <purpose>
-Create an executable PLAN.md for the current or specified phase. The plan defines objective, acceptance criteria, tasks, boundaries, and verification - everything needed for APPLY phase execution.
+Create an executable PLAN.md for the current or specified phase. Detects work size to route between quick-fix (compressed) and standard (full) ceremony, validates plan coherence against project context, and defines objective, acceptance criteria, tasks, boundaries, and verification — everything needed for APPLY phase execution.
 </purpose>
 
 <when_to_use>
@@ -48,17 +48,50 @@ Next phase: APPLY (after plan approval)
 3. Confirm phase selection before proceeding
 </step>
 
+<step name="classify_scope">
+**Detect work size and route to appropriate ceremony level — instead of applying full ceremony to every change, because a one-line fix doesn't need boundaries sections and verification checklists.**
+
+Analyze the user's request and phase scope:
+
+**Quick-fix signals** (all three must be true):
+- User's request fits in one sentence
+- Touches 1-2 files
+- No architectural implications (no new patterns, no dependency changes, no structural decisions)
+
+**Complex signals** (any one triggers):
+- 6+ tasks estimated
+- Multiple subsystems affected
+- Architectural decisions needed
+- Phase description in ROADMAP mentions multiple concerns
+
+**Standard:** Everything else (default track).
+
+**Confirm routing with user:**
+```
+This looks like a [quick-fix / standard / complex] scope.
+
+[quick-fix]: Compressed plan — objective + 1 task + 1 AC. Still loops through apply and unify.
+[standard]: Full plan with boundaries, multiple ACs, verification checklist.
+[complex]: Full plan + recommend splitting into multiple plans if >3 tasks.
+
+Proceed with [detected track]? Or override to a different track?
+```
+
+Wait for response. Store as `plan_track`.
+</step>
+
 <step name="analyze_scope">
 1. Review phase goals from ROADMAP.md
 2. Estimate number of tasks needed:
-   - Target: 2-3 tasks per plan
-   - If >3 tasks, consider splitting into multiple plans
+   - **Quick-fix:** 1 task only
+   - **Standard:** Target 2-3 tasks per plan — instead of larger plans, because quality degrades past 50% context usage
+   - **Complex:** If >3 tasks, actively suggest splitting into multiple plans
 3. Identify files that will be modified
-4. Determine if checkpoints are needed:
+4. **If standard or complex:** Determine if checkpoints are needed:
    - Visual verification required? → checkpoint:human-verify
    - Architecture decision needed? → checkpoint:decision
    - Unavoidable manual action? → checkpoint:human-action (rare)
-5. Set autonomous flag: true if no checkpoints, false otherwise
+5. Set autonomous flag: true if no checkpoints (quick-fix is always autonomous)
 </step>
 
 <step name="load_context">
@@ -70,11 +103,13 @@ Next phase: APPLY (after plan approval)
    - Decisions made
    - Any deferred issues
 3. Read source files relevant to this phase's work
-4. Do NOT reflexively chain all prior summaries - only load what's genuinely needed
+4. Do NOT reflexively chain all prior summaries — instead only load what's genuinely needed for THIS plan, because unnecessary context loading wastes tokens and dilutes focus
 </step>
 
 <step name="check_specialized_flows">
 **Check for SPECIAL-FLOWS.md and populate skills section.**
+
+**Skip this step for quick-fix plans** — compressed format doesn't include skills section.
 
 1. Check if `.paul/SPECIAL-FLOWS.md` exists
 2. If exists:
@@ -88,7 +123,7 @@ Next phase: APPLY (after plan approval)
 4. Display reminder if required skills found:
    ```
    ════════════════════════════════════════
-   ⚠️  REQUIRED SKILLS for this plan:
+   REQUIRED SKILLS for this plan:
    ════════════════════════════════════════
    - /skill-1 (work type: X)
    - /skill-2 (work type: Y)
@@ -102,8 +137,59 @@ Required skills will BLOCK apply-phase until confirmed loaded.
 </step>
 
 <step name="create_plan">
+**Generate PLAN.md — format adapts based on `plan_track`.**
+
 1. Create phase directory: `.paul/phases/{NN}-{phase-name}/`
-2. Generate PLAN.md following template structure:
+
+**If `plan_track = quick-fix`:**
+
+Generate compressed PLAN.md:
+```markdown
+---
+phase: NN-name
+plan: NN
+type: execute
+autonomous: true
+---
+
+<objective>
+## Goal
+[Single sentence: what this fixes/changes]
+</objective>
+
+<context>
+@.paul/PROJECT.md
+@relevant/source/file
+</context>
+
+<acceptance_criteria>
+## AC-1: [Criterion]
+Given [precondition]
+When [action]
+Then [expected outcome]
+</acceptance_criteria>
+
+<tasks>
+<task type="auto">
+  <name>[Action-oriented name]</name>
+  <files>[file paths]</files>
+  <action>[Specific instructions]</action>
+  <verify>[How to prove it worked]</verify>
+  <done>AC-1 satisfied: [condition]</done>
+</task>
+</tasks>
+
+<output>
+After completion, create compressed SUMMARY.md
+</output>
+```
+
+No boundaries, no verification checklist, no success_criteria, no skills section.
+Still a valid PLAN.md that APPLY can execute and UNIFY can reconcile.
+
+**If `plan_track = standard` or `complex`:**
+
+Generate full PLAN.md following template structure:
 
    **Frontmatter:**
    - phase: NN-name
@@ -132,6 +218,9 @@ Required skills will BLOCK apply-phase until confirmed loaded.
 </step>
 
 <step name="validate_plan">
+**If quick-fix:** Validate AC is testable and task has files + action + verify + done. Skip section completeness check.
+
+**If standard/complex:**
 1. Check all sections present
 2. Verify acceptance criteria are testable
 3. Confirm tasks are specific enough (files + action + verify + done)
@@ -140,6 +229,46 @@ Required skills will BLOCK apply-phase until confirmed loaded.
    - After automated work completes
    - Before dependent decisions
    - Not too frequent (avoid checkpoint fatigue)
+</step>
+
+<step name="coherence_check">
+**Lightweight coherence validation — runs automatically for ALL plan tracks, surfaces only when issues found.**
+
+This is NOT the enterprise audit — it's a quick validation pass that runs in seconds, adding friction only when contradictions exist.
+
+1. **PROJECT.md alignment:**
+   - Read PROJECT.md constraints section
+   - Does the plan contradict any stated constraint?
+   - Example: PROJECT.md says "no external dependencies" but plan adds a package
+
+2. **Accumulated decisions:**
+   - Read STATE.md `### Decisions` table
+   - Does the plan conflict with any recorded decision?
+   - Example: Decision says "use JWT auth" but plan implements session auth
+
+3. **Recent file overlap:**
+   - Check last 2-3 SUMMARY files in the current or prior phase
+   - Does the plan modify files that were changed recently without acknowledging it?
+   - Example: Plan modifies auth.ts which was rewritten last phase
+   - **Note:** Overlap isn't always bad — just flag it so the user is aware
+
+4. **ROADMAP scope match:**
+   - Read the phase description in ROADMAP.md
+   - Does the plan's scope match what the phase is supposed to deliver?
+   - Example: Phase says "UI components" but plan does database migrations
+
+**If issues found:**
+```
+⚠️ Coherence check found [N] items:
+  1. [specific issue with file/section reference]
+  2. [specific issue with file/section reference]
+
+Review these before approving, or type "acknowledged" to proceed.
+```
+
+Wait for user response if issues found.
+
+**If no issues:** Silent pass. No output. Zero friction.
 </step>
 
 <step name="check_audit_config">
@@ -196,7 +325,7 @@ This flag determines whether the post-plan routing suggests audit before APPLY.
    **If `audit_enabled` is true:**
    ```
    ════════════════════════════════════════
-   PLAN CREATED
+   PLAN CREATED [quick-fix / standard / complex]
    ════════════════════════════════════════
 
    Plan: [plan-path]
@@ -217,7 +346,7 @@ This flag determines whether the post-plan routing suggests audit before APPLY.
    **If `audit_enabled` is false (default):**
    ```
    ════════════════════════════════════════
-   PLAN CREATED
+   PLAN CREATED [quick-fix / standard / complex]
    ════════════════════════════════════════
 
    Plan: [plan-path]
@@ -251,6 +380,6 @@ Example: `.paul/phases/04-workflows-layer/04-01-PLAN.md`
 - Ask user to create ROADMAP.md or run init-project
 
 **Phase dependencies not met:**
-- Warn user which prior phases must complete first
+- Warn user which prior phases must complete first — instead of silently proceeding, because building on incomplete foundations produces plans that can't execute
 - Do not create plan until dependencies satisfied
 </error_handling>

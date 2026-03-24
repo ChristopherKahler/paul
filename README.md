@@ -52,11 +52,15 @@ The complexity is in the system, not your workflow. Behind the scenes: structure
 
 ## Who This Is For
 
-**AI-assisted developers** who want structure without bureaucracy.
+**Builders who use AI to ship** — software, campaigns, workflows, automations, anything that benefits from structured execution.
+
+PAUL isn't just for code. It manages marketing campaigns, funnel builds, email sequences, and automation workflows with the same rigor it brings to software development.
 
 You describe what you want, Claude Code builds it, and PAUL ensures:
+- **Init gathers real requirements** — type-adapted walkthrough produces a populated project brief, not empty placeholders
 - Plans have clear acceptance criteria
-- Execution stays bounded
+- **Every task is qualified against the spec** — not just executed and assumed correct
+- Execution stays bounded with explicit scope control
 - Every unit of work gets closed properly
 - State persists across sessions
 - Decisions are logged for future reference
@@ -80,12 +84,18 @@ Verify with `/paul:help` inside Claude Code.
 
 ```bash
 # 1. Initialize PAUL in your project
+#    Walks through type-adapted requirements (app, campaign, workflow)
+#    Produces a populated PROJECT.md — not empty placeholders
 /paul:init
 
 # 2. Create a plan for your work
+#    Auto-detects scope: quick-fix, standard, or complex
+#    Validates coherence against project context before approval
 /paul:plan
 
 # 3. Execute the approved plan
+#    Each task goes through Execute/Qualify loop
+#    Escalation statuses: DONE, DONE_WITH_CONCERNS, NEEDS_CONTEXT, BLOCKED
 /paul:apply
 
 # 4. Close the loop (required!)
@@ -128,19 +138,26 @@ Every unit of work follows this cycle:
 
 ### PLAN
 
-Create an executable plan with:
+Create an executable plan with scope-adaptive ceremony:
+
+- **Quick-fix** (1 file, 1 change) — Compressed: objective + 1 task + 1 AC. Full loop, minimal ceremony.
+- **Standard** (2-5 tasks) — Full plan with boundaries, multiple ACs, verification checklist.
+- **Complex** (6+ tasks) — Full plan + actively recommends splitting.
+
+All plans include:
 - **Objective** — What you're building and why
 - **Acceptance Criteria** — Given/When/Then definitions of done
 - **Tasks** — Specific actions with files, verification, done criteria
-- **Boundaries** — What NOT to change
+- **Boundaries** — What NOT to change (standard/complex only)
+- **Coherence validation** — Auto-checked against project context before approval
 
 ### APPLY
 
-Execute the approved plan:
-- Tasks run sequentially
-- Each task has verification
-- Checkpoints pause for human input when needed
-- Deviations are logged
+Execute the approved plan with built-in quality enforcement:
+- Tasks follow an **Execute/Qualify loop** — after execution, each task is independently verified against the spec and linked acceptance criteria before moving on
+- **Escalation statuses** give nuance beyond pass/fail: DONE, DONE_WITH_CONCERNS, NEEDS_CONTEXT, BLOCKED
+- Checkpoints pause for human input when needed — with **diagnostic failure routing** that classifies issues as intent, spec, or code before attempting fixes
+- Anti-rationalization enforcement prevents false completion claims
 
 ### UNIFY
 
@@ -162,8 +179,8 @@ PAUL provides 26 commands organized by purpose. Run `/paul:help` for the complet
 
 | Command | What it does |
 |---------|--------------|
-| `/paul:init` | Initialize PAUL in a project |
-| `/paul:plan [phase]` | Create an executable plan |
+| `/paul:init` | Initialize PAUL with type-adapted requirements walkthrough |
+| `/paul:plan [phase]` | Create an executable plan (auto-routes quick-fix/standard/complex) |
 | `/paul:apply [path]` | Execute an approved plan |
 | `/paul:unify [path]` | Reconcile and close the loop |
 | `/paul:help` | Show command reference |
@@ -324,6 +341,55 @@ The PAUL domain contains 14 rules that govern structured AI development. They lo
 
 **Without CARL:** You'd need massive static prompts in every session.
 **With CARL:** Rules activate when relevant, disappear when not.
+
+---
+
+## Quality Enforcement
+
+PAUL doesn't just plan and execute — it verifies. These systems work together to catch problems early, before they compound.
+
+### Execute/Qualify Loop
+
+Every task in the APPLY phase goes through an E/Q loop:
+
+```
+Execute → Report Status → Qualify Against Spec → (fix gaps) → Next Task
+```
+
+The **Qualify** step independently re-reads what was actually produced and compares it against the task spec and acceptance criteria. This catches drift, missing requirements, and false completions that would otherwise pass unnoticed until UNIFY — when it's too late.
+
+### Escalation Statuses
+
+Tasks report one of four statuses instead of binary pass/fail:
+
+| Status | Meaning |
+|---|---|
+| **DONE** | Completed, no concerns |
+| **DONE_WITH_CONCERNS** | Completed, but flagged doubts for review |
+| **NEEDS_CONTEXT** | Can't complete — missing information |
+| **BLOCKED** | Can't complete — structural impediment |
+
+This surfaces uncertainty honestly instead of silently swallowing it.
+
+### Diagnostic Failure Routing
+
+When a checkpoint fails or UAT finds issues, PAUL classifies the root cause before attempting any fix:
+
+- **Intent issue** — Need to build something different → re-plan the phase
+- **Spec issue** — Plan was missing/wrong → fix the spec before patching code
+- **Code issue** — Plan was right, code doesn't match → standard fix-in-place
+
+This prevents the common failure mode of patching code when the plan itself was wrong.
+
+### Coherence Check
+
+Before presenting any plan for approval, PAUL automatically validates it against:
+- PROJECT.md constraints
+- Accumulated decisions in STATE.md
+- Files modified in recent plans
+- ROADMAP.md phase scope
+
+Issues get flagged before approval. Clean plans pass silently with zero friction.
 
 ---
 

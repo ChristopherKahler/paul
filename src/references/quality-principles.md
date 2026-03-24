@@ -56,6 +56,33 @@ This enables:
 - Deviation tracking against defined scope
 </acceptance_driven>
 
+<evidence_before_claims>
+
+No completion claim without fresh verification evidence.
+
+**The evidence chain:** Execute → Verify (run command) → Read output → Compare to spec → THEN claim.
+
+Breaking any link in the chain produces false completion:
+- Skip verify → "it should work" (hope, not evidence)
+- Run verify but don't read output → "I ran it" (ritual, not verification)
+- Read output but don't compare to spec → "tests pass" (partial check — tests may be incomplete)
+- Compare to spec but from memory → "I checked it" (stale check — re-read the actual files)
+
+**Anti-rationalization reference:**
+
+| If you're thinking... | STOP. Instead... | Because... |
+|---|---|---|
+| "Should work now" | Run the verify command and read its output | Confidence is not evidence |
+| "I already checked this" | Check it again, fresh | Memory of checking is not verification |
+| "It's close enough" | Compare against the AC word by word | "Close" fails acceptance criteria |
+| "The test passes" | Also compare against the spec | Tests can be incomplete |
+| "This is a minor deviation" | Log it explicitly | Minor deviations compound into drift |
+| "I'm confident it works" | Run it and prove it | Confidence without evidence is the #1 cause of false completions |
+
+This table is the canonical reference. It is embedded inline in the APPLY phase qualify step for operational enforcement.
+
+</evidence_before_claims>
+
 <scope_control>
 
 Plans must complete within reasonable context usage.
@@ -66,8 +93,7 @@ Plans must complete within reasonable context usage.
 - 50-70% context: Degrading quality
 - 70%+ context: Poor quality
 
-**Solution:** Aggressive atomicity - split into small, focused plans.
-- 2-3 tasks per plan maximum
+**Solution:** Target 2-3 tasks per plan — instead of larger plans, because quality degrades past 50% context usage and splitting preserves peak output per token.
 - Each plan independently executable
 - Target ~50% context per plan (40% for TDD plans)
 </scope_control>
@@ -120,7 +146,7 @@ NEVER include:
 - Change management processes
 - Documentation for documentation's sake
 
-If it sounds like corporate PM theater, delete it.
+If it sounds like corporate PM theater, delete it — instead of keeping it "just in case", because unnecessary ceremony consumes tokens without producing value.
 </anti_enterprise>
 
 </principles>

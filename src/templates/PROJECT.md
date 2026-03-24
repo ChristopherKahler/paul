@@ -2,7 +2,7 @@
 
 Template for `.paul/PROJECT.md` — the project's business context and requirements.
 
-**Purpose:** Define what we're building, why it matters, and constraints. This is the "brief" that informs all planning.
+**Purpose:** Define what we're building, why it matters, and constraints. This is the "brief" that informs all planning. Init populates this from a type-adapted requirements walkthrough — instead of leaving placeholders, because plans built against real requirements produce better output.
 
 ---
 
@@ -23,6 +23,7 @@ Template for `.paul/PROJECT.md` — the project's business context and requireme
 
 | Attribute | Value |
 |-----------|-------|
+| Type | [Application / Campaign / Workflow / Other] |
 | Version | [current version] |
 | Status | [Prototype / MVP / Beta / Production] |
 | Last Updated | [YYYY-MM-DD] |
@@ -33,34 +34,41 @@ Template for `.paul/PROJECT.md` — the project's business context and requireme
 
 ## Requirements
 
+### Core [Features / Deliverables / Automation Scope]
+
+<!-- Label adapts by project type:
+     Application: "Core Features" — the 3-5 things users do in this app
+     Campaign: "Core Deliverables" — landing pages, emails, ad copy, etc.
+     Workflow: "Automation Scope" — what this automates and what triggers it
+     Other: "Core Deliverables" — primary outputs of this project -->
+
+- [item 1]
+- [item 2]
+- [item 3]
+
 ### Validated (Shipped)
 
 [Requirements that have been implemented and proven]
 
 - [x] [Requirement 1] — [version shipped]
-- [x] [Requirement 2] — [version shipped]
-- [x] [Requirement 3] — [version shipped]
 
 ### Active (In Progress)
 
 [Requirements currently being worked on]
 
 - [ ] [Requirement 1] — [status/notes]
-- [ ] [Requirement 2] — [status/notes]
 
 ### Planned (Next)
 
 [Requirements queued for upcoming work]
 
 - [ ] [Requirement 1]
-- [ ] [Requirement 2]
 
 ### Out of Scope
 
 [Explicitly excluded requirements — important for preventing scope creep]
 
 - [Excluded feature 1] — [reason]
-- [Excluded feature 2] — [reason]
 
 ## Target Users
 
@@ -83,43 +91,56 @@ Template for `.paul/PROJECT.md` — the project's business context and requireme
 ## Constraints
 
 ### Technical Constraints
-- [Constraint 1: e.g., "Must run on Vercel serverless"]
-- [Constraint 2: e.g., "Database must be PostgreSQL"]
+
+<!-- Type-adapted examples:
+     Application: deployment platform limits, framework constraints, auth requirements, external API dependencies
+     Campaign: platform limitations, character limits, image specs, automation constraints
+     Workflow: rate limits, API auth requirements, platform-specific restrictions, error handling needs -->
+
+- [Constraint 1]
+- [Constraint 2]
 
 ### Business Constraints
-- [Constraint 1: e.g., "No PII storage outside approved regions"]
-- [Constraint 2: e.g., "Must integrate with existing CRM"]
+
+<!-- Type-adapted examples:
+     Application: budget, timeline, team skills, compliance requirements
+     Campaign: budget, timeline, brand guidelines, approval chains, legal review
+     Workflow: SLAs, uptime requirements, data handling policies, vendor contracts -->
+
+- [Constraint 1]
+- [Constraint 2]
 
 ### Compliance Constraints
 - [Constraint 1: e.g., "GDPR data handling required"]
-- [Constraint 2: e.g., "SOC 2 audit trail needed"]
 
 ## Key Decisions
 
 | Decision | Rationale | Date | Status |
 |----------|-----------|------|--------|
 | [What was decided] | [Why] | [YYYY-MM-DD] | Active / Superseded |
-| [Decision 2] | [Rationale] | [Date] | [Status] |
 
 ## Success Metrics
 
-[How we know if this project succeeds — measurable outcomes]
+<!-- Type-adapted examples:
+     Application: test coverage, uptime, response time, user adoption, error rate
+     Campaign: conversion rate, open rate, click-through rate, ROAS, lead volume, cost per lead
+     Workflow: execution success rate, processing time, error rate, throughput, data accuracy -->
 
 | Metric | Target | Current | Status |
 |--------|--------|---------|--------|
 | [Metric 1] | [Target value] | [Current value] | [On track / At risk / Achieved] |
-| [Metric 2] | [Target] | [Current] | [Status] |
 
-## Tech Stack
+## Tech Stack / Tools
+
+<!-- Adapts by project type:
+     Application: framework, frontend, database, hosting, auth, payments
+     Campaign: platform (GHL, ClickFunnels), ad platforms (Meta, Google), email tool, analytics
+     Workflow: integration platform (Zapier, Make, custom), APIs, scheduler, monitoring
+     Other: whatever tools/platforms are involved -->
 
 | Layer | Technology | Notes |
 |-------|------------|-------|
-| Framework | [e.g., Laravel 11] | |
-| Frontend | [e.g., Vue 3 + Inertia] | |
-| Database | [e.g., PostgreSQL] | |
-| Hosting | [e.g., Forge/Vapor] | |
-| Auth | [e.g., Laravel Breeze] | |
-| Payments | [e.g., Laravel Cashier] | |
+| [Layer/Category] | [Tool/Technology] | [Why this choice] |
 
 ## Links
 
@@ -127,7 +148,6 @@ Template for `.paul/PROJECT.md` — the project's business context and requireme
 |----------|-----|
 | Repository | [URL] |
 | Production | [URL] |
-| Staging | [URL] |
 | Documentation | [URL] |
 
 ---
@@ -149,9 +169,19 @@ Template for `.paul/PROJECT.md` — the project's business context and requireme
 **Format:** Single sentence answering "What problem for whom?"
 **Example:** "Attorneys can make informed accept/reject decisions on cases in under 2 minutes without reading raw documents."
 
+### Core Features / Deliverables / Automation Scope
+**Purpose:** The 3-5 primary capabilities or outputs this project delivers. Populated during init walkthrough.
+**Type-adaptive label:**
+- Application → "Core Features"
+- Campaign → "Core Deliverables"
+- Workflow → "Automation Scope"
+- Other → "Core Deliverables"
+**Why:** Plans that reference specific features produce better acceptance criteria than plans referencing "[To be defined]" placeholders.
+
 ### Requirements
 **Purpose:** Track feature state across development.
 **Categories:**
+- **Core [Features/Deliverables]:** Top-level project capabilities (populated during init)
 - **Validated:** Shipped and proven
 - **Active:** Currently being implemented
 - **Planned:** Queued for future
@@ -161,6 +191,7 @@ Template for `.paul/PROJECT.md` — the project's business context and requireme
 **Purpose:** Who we're building for.
 **Include:** Characteristics, goals, needs.
 **Why:** Prevents building for imaginary users.
+**Note:** For campaigns, this is the target audience. For workflows, this may be internal team or system consumers.
 
 ### Constraints
 **Purpose:** Hard limits on solutions.
@@ -168,13 +199,21 @@ Template for `.paul/PROJECT.md` — the project's business context and requireme
 - Technical (platform, technology requirements)
 - Business (partnerships, integrations, budget)
 - Compliance (legal, regulatory, security)
+**Type-adaptive:** Comments in template show relevant examples per project type.
 
 ### Key Decisions
 **Purpose:** Record of significant decisions.
 **Include:** What, why, when, status (Active/Superseded).
 **Integration:** Can sync with decision-logger MCP.
+**Note:** Init walkthrough may capture early decisions (tech stack, platform choice, approach). These are pre-populated if gathered.
 
 ### Success Metrics
 **Purpose:** Measurable outcomes.
 **Include:** Target values and current state.
+**Type-adaptive:** Application metrics differ from campaign metrics differ from workflow metrics. Comments show relevant examples per type.
 **Why:** Objective success criteria prevent endless scope expansion.
+
+### Tech Stack / Tools
+**Purpose:** What technologies and platforms are involved.
+**Type-adaptive:** "Tech Stack" for applications, "Platforms & Tools" for campaigns, "Integration Stack" for workflows. The table format accommodates all types.
+**Note:** Populated during init walkthrough when user discusses their stack/tools/platforms.

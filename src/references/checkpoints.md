@@ -126,11 +126,34 @@ Checkpoints formalize interaction points where human verification or decisions a
 
 When executing a plan encounters `type="checkpoint:*"`:
 
-1. **Stop immediately** - do not proceed to next task
+1. **Stop immediately** — do not proceed to next task
 2. **Display checkpoint clearly** with visual separator
-3. **Wait for user response** - do not assume or hallucinate completion
-4. **Verify if possible** - check files, run tests after human action
-5. **Resume execution** - continue only after confirmation
+3. **Wait for user response** — instead of proceeding on assumptions, because unverified checkpoints accumulate into larger failures that are harder to diagnose
+4. **Verify if possible** — check files, run tests after human action
+5. **Resume execution** — continue only after confirmation
+
+## Diagnostic Failure Routing
+
+When a checkpoint:human-verify receives failure reports OR when `/paul:verify` finds issues, classify the root cause BEFORE attempting fixes — instead of patching immediately, because wrong-layer fixes produce fragile patches that break again.
+
+**Classification:**
+
+| Type | Signal | Routing |
+|---|---|---|
+| **Intent** | "I need something different than what was planned" | Archive plan, re-plan the phase with updated intent |
+| **Spec** | "The plan missed something or got it wrong" | Update ACs/tasks at the spec level before generating code fixes |
+| **Code** | "The plan was right, implementation doesn't match" | Standard fix-in-place — patch code, re-verify |
+
+**Where this applies:**
+- **During APPLY:** checkpoint:human-verify failures (see apply-phase.md)
+- **After APPLY:** /paul:verify UAT failures (see verify-work.md)
+
+**Why classification matters:**
+- Intent wrong + code patch = fix that contradicts what the user actually wants
+- Spec wrong + code patch = fix that contradicts the plan, making UNIFY reconciliation unreliable
+- Code wrong + code patch = correct response — this is the only case where patching is the right move
+
+**Anti-pattern:** Jumping straight to code patches without classifying. Claude's default under pressure is to patch code because it's the fastest visible action — but speed at the wrong layer creates more work than pausing to classify.
 
 ## Authentication Gates
 

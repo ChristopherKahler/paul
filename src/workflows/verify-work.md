@@ -193,9 +193,39 @@ If all passed:
 - "Done" — Finish testing session
 
 If issues found:
-- "Plan fixes" — Create plan to address issues
-- "Log and continue" — Issues logged, proceed anyway
-- "Review issues" — Look at logged issues in detail
+
+**Diagnostic classification — classify before fixing, instead of jumping to code patches, because fixing the wrong layer wastes loops and produces fragile patches:**
+
+Use AskUserQuestion:
+- header: "Classify Issues"
+- question: "Before planning fixes, what went wrong?"
+- options:
+  - "Intent issue" — The feature needs to work differently than planned
+  - "Spec issue" — The plan missed a requirement or got something wrong
+  - "Code issue" — The plan was right, the code doesn't match
+  - "Log and continue" — Issues logged, proceed without fixing now
+  - "Review issues" — Look at logged issues in detail
+
+**Routing per classification:**
+
+**Intent (1):** "Let's re-plan with updated intent."
+- Route to `/paul:plan` for affected phase with updated intent
+- Previous plan's issues inform the re-plan
+- Do NOT create a fix plan — the spec itself needs rethinking
+
+**Spec (2):** "The plan needs updating before we fix code."
+- Route to `/paul:plan-fix` with spec-level scope
+- Identify which ACs or tasks need revision
+- Update the plan FIRST, then generate code fixes from the corrected spec
+- This prevents patching code against a wrong spec
+
+**Code (3):** "Standard fix — plan was right, code needs patching."
+- Route to `/paul:plan-fix` with code-level scope (existing behavior)
+- Generate targeted fix plan from UAT issues
+
+**Log and continue (4):** Issues logged, proceed anyway (existing behavior)
+
+**Review issues (5):** Show logged issues in detail (existing behavior)
 </step>
 
 </process>
