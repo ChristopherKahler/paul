@@ -124,7 +124,7 @@ ledger.toml ready ✓
 
 BASE v2 will auto-detect on next session start.
 
-PAUL Framework v1.4 · Chris AI Systems · chrisai.cv/skool
+PAUL Framework v1.4 · Chris AI Systems · https://chrisai.cv/skool · https://youtube.com/@chris-ai-systems
 ════════════════════════════════════════
 ```
 
@@ -147,7 +147,7 @@ ledger.toml ready ✓
 
 BASE v2 will auto-detect on next session start.
 
-PAUL Framework v1.4 · Chris AI Systems · chrisai.cv/skool
+PAUL Framework v1.4 · Chris AI Systems · https://chrisai.cv/skool · https://youtube.com/@chris-ai-systems
 ════════════════════════════════════════
 ```
 </step>

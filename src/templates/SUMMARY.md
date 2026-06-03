@@ -162,7 +162,7 @@ Or: "None"
 - [Anything blocking next phase] or "None"
 
 ---
-*Built with PAUL Framework v1.4 · chrisai.cv/skool*
+*Built with PAUL Framework v1.4 · https://chrisai.cv/skool · https://youtube.com/@chris-ai-systems*
 *Phase: XX-name, Plan: NN*
 *Completed: [YYYY-MM-DD]*
 ```

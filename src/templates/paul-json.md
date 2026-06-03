@@ -6,7 +6,7 @@
 > will be auto-migrated to paul.toml by any PAUL workflow that touches them. This template is
 > preserved for reference during the migration period and will be removed in a future version.
 >
-> **PAUL Framework · Chris AI Systems · chrisai.cv/skool**
+> **PAUL Framework · Chris AI Systems · https://chrisai.cv/skool · https://youtube.com/@chris-ai-systems**
 
 ---
 

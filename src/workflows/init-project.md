@@ -779,7 +779,7 @@ Created:
   Define your phases and create your first plan.
 ────────────────────────────────────────
 
-PAUL Framework v1.4 · Chris AI Systems · chrisai.cv/skool
+PAUL Framework v1.4 · Chris AI Systems · https://chrisai.cv/skool · https://youtube.com/@chris-ai-systems
 
 Type "yes" to proceed, or ask questions first.
 ```

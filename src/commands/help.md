@@ -521,6 +521,6 @@ Completion checks
 
 ---
 
-*PAUL Framework v1.4 · Chris AI Systems · chrisai.cv/skool*
+*PAUL Framework v1.4 · Chris AI Systems · https://chrisai.cv/skool · https://youtube.com/@chris-ai-systems*
 *23 commands | 14 workflows | 13 templates*
 </reference>
