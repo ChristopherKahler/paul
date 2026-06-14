@@ -1,0 +1,26 @@
+name: plugin-install
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate-and-install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+      - name: Validate plugin + marketplace manifest (strict)
+        run: claude plugin validate . --strict
+      - name: Install smoke test (claude can install the plugin)
+        run: |
+          set -euo pipefail
+          claude plugin marketplace add ./
+          claude plugin install paul@paul
+          claude plugin list
+          claude plugin list | grep -i 'paul'

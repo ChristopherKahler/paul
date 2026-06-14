@@ -1,0 +1,19 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "paul",
+  "description": "PAUL -- structured Plan-Apply-Unify development workflow, as a native plugin.",
+  "owner": {
+    "name": "ChristopherKahler",
+    "url": "https://github.com/ChristopherKahler"
+  },
+  "plugins": [
+    {
+      "name": "paul",
+      "description": "PAUL -- structured Plan-Apply-Unify development workflow, as a native plugin.",
+      "version": "1.4.0",
+      "source": ".",
+      "category": "framework",
+      "keywords": ["paul", "planning", "plan-apply-unify"]
+    }
+  ]
+}

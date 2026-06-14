@@ -92,7 +92,15 @@ function expandTilde(filePath) {
 }
 
 /**
- * Recursively copy directory, replacing paths in .md files
+ * Recursively copy directory, replacing paths in .md files.
+ *
+ * Dual-mode substitution:
+ *   - Plugin-native form: ${CLAUDE_PLUGIN_ROOT}/ is substituted at runtime by
+ *     Claude Code and must remain verbatim in the committed source.
+ *   - npx-installed form: ${CLAUDE_PLUGIN_ROOT}/ is expanded to pathPrefix
+ *     during this copy so installed files contain no literal macro tokens.
+ *   - Legacy fallback: any residual ~/.claude/ refs are also replaced with
+ *     pathPrefix so older source lines continue to work correctly.
  */
 function copyWithPathReplacement(srcDir, destDir, pathPrefix) {
   fs.mkdirSync(destDir, { recursive: true });
@@ -106,8 +114,10 @@ function copyWithPathReplacement(srcDir, destDir, pathPrefix) {
     if (entry.isDirectory()) {
       copyWithPathReplacement(srcPath, destPath, pathPrefix);
     } else if (entry.name.endsWith('.md')) {
-      // Replace ~/.claude/ with the appropriate prefix in markdown files
       let content = fs.readFileSync(srcPath, 'utf8');
+      // Expand the plugin-native macro to the real install path.
+      content = content.replace(/\$\{CLAUDE_PLUGIN_ROOT\}\//g, pathPrefix);
+      // Legacy fallback: replace any remaining ~/.claude/ refs.
       content = content.replace(/~\/\.claude\//g, pathPrefix);
       fs.writeFileSync(destPath, content);
     } else {
@@ -142,22 +152,33 @@ function install(isGlobal) {
   const commandsDir = path.join(claudeDir, 'commands');
   fs.mkdirSync(commandsDir, { recursive: true });
 
-  // Copy src/commands to commands/paul
-  const commandsSrc = path.join(src, 'src', 'commands');
+  // Copy commands/ (plugin-native layout) to <claudeDir>/commands/paul
+  // Falls back to src/commands for compatibility with older checkouts.
+  const commandsSrcNative = path.join(src, 'commands');
+  const commandsSrcLegacy = path.join(src, 'src', 'commands');
+  const commandsSrc = fs.existsSync(commandsSrcNative) ? commandsSrcNative : commandsSrcLegacy;
   const commandsDest = path.join(commandsDir, 'paul');
   copyWithPathReplacement(commandsSrc, commandsDest, pathPrefix);
   console.log(`  ${green}✓${reset} Installed commands/paul`);
 
-  // Copy src/* (except commands) to paul-framework/
+  // Copy paul-framework/ (plugin-native layout) to <claudeDir>/paul-framework/
+  // Falls back to src/{templates,workflows,references,rules} for older checkouts.
   const skillDest = path.join(claudeDir, 'paul-framework');
   fs.mkdirSync(skillDest, { recursive: true });
 
-  const srcDirs = ['templates', 'workflows', 'references', 'rules'];
-  for (const dir of srcDirs) {
-    const dirSrc = path.join(src, 'src', dir);
-    const dirDest = path.join(skillDest, dir);
-    if (fs.existsSync(dirSrc)) {
-      copyWithPathReplacement(dirSrc, dirDest, pathPrefix);
+  const frameworkSrcNative = path.join(src, 'paul-framework');
+  if (fs.existsSync(frameworkSrcNative)) {
+    // New layout: paul-framework/ is a single tree ready to copy.
+    copyWithPathReplacement(frameworkSrcNative, skillDest, pathPrefix);
+  } else {
+    // Legacy layout: individual subdirs under src/.
+    const srcDirs = ['templates', 'workflows', 'references', 'rules'];
+    for (const dir of srcDirs) {
+      const dirSrc = path.join(src, 'src', dir);
+      const dirDest = path.join(skillDest, dir);
+      if (fs.existsSync(dirSrc)) {
+        copyWithPathReplacement(dirSrc, dirDest, pathPrefix);
+      }
     }
   }
   console.log(`  ${green}✓${reset} Installed paul-framework`);

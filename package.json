@@ -7,11 +7,9 @@
   },
   "files": [
     "bin",
-    "src/commands",
-    "src/templates",
-    "src/references",
-    "src/workflows",
-    "src/rules"
+    "commands",
+    "paul-framework",
+    ".claude-plugin"
   ],
   "keywords": [
     "claude",

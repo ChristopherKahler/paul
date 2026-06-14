@@ -1,0 +1,11 @@
+{
+  "name": "paul",
+  "version": "1.4.0",
+  "description": "PAUL -- structured Plan-Apply-Unify development workflow, as a native plugin.",
+  "author": {
+    "name": "Chris Kahler"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/ChristopherKahler/paul#readme",
+  "keywords": ["paul", "planning", "plan-apply-unify"]
+}
