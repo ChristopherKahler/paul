@@ -2,7 +2,7 @@
 name: paul:handoff
 description: Generate comprehensive session handoff document
 argument-hint: "[context notes]"
-allowed-tools: [Read, Write]
+allowed-tools: [Read, Write, Bash]
 ---
 
 <objective>
@@ -165,6 +165,26 @@ Next session: /paul:resume → read handoff
 ```
 </step>
 
+<step name="register_handoff">
+**Register the handoff with `base` so it resurfaces at next session start.**
+
+Without this, the doc sits on disk but the session-start resume list never queues it (the gap that loses handoffs). The project slug comes from `.paul/paul.toml`'s `name` field; the doc path must be absolute.
+
+```bash
+if command -v base >/dev/null 2>&1; then
+  PROJECT=$(grep -m1 '^name *= *' .paul/paul.toml 2>/dev/null | sed -E 's/^name *= *"(.*)"/\1/')
+  DOC="$(pwd)/.paul/HANDOFF-{date}-{context}.md"
+  if [ -n "$PROJECT" ] && [ -f "$DOC" ]; then
+    base handoff create --project "$PROJECT" --doc "$DOC" \
+      && echo "✓ Registered with base — resurfaces at next session start" \
+      || echo "Note: base handoff registration skipped (pre-handoff base version)"
+  fi
+fi
+```
+
+Substitute the real `{date}-{context}` from the file just written. If `base` is absent or predates the `handoff` subcommand, the step no-ops — the handoff is still on disk.
+</step>
+
 </process>
 
 <smart_context_detection>
@@ -198,4 +218,5 @@ Next session: /paul:resume → read handoff
 - [ ] Structured handoff generated
 - [ ] Reference files included
 - [ ] Next actions prioritized
+- [ ] Handoff registered with `base` (resurfaces next session)
 </success_criteria>
