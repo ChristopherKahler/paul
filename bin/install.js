@@ -31,6 +31,7 @@ ${cyan}  ██████╗  █████╗ ██╗   ██╗██�
 const args = process.argv.slice(2);
 const hasGlobal = args.includes('--global') || args.includes('-g');
 const hasLocal = args.includes('--local') || args.includes('-l');
+const hasSkillsDir = args.includes('--skills-dir');
 
 // Parse --config-dir argument
 function parseConfigDirArg() {
@@ -49,7 +50,27 @@ function parseConfigDirArg() {
   }
   return null;
 }
+
+// Parse --dir argument (used with --skills-dir)
+function parseDirArg() {
+  const dirIndex = args.findIndex(arg => arg === '--dir');
+  if (dirIndex !== -1) {
+    const nextArg = args[dirIndex + 1];
+    if (!nextArg || nextArg.startsWith('-')) {
+      console.error(`  ${yellow}--dir requires a path argument${reset}`);
+      process.exit(1);
+    }
+    return nextArg;
+  }
+  const dirArg = args.find(arg => arg.startsWith('--dir='));
+  if (dirArg) {
+    return dirArg.split('=')[1];
+  }
+  return null;
+}
+
 const explicitConfigDir = parseConfigDirArg();
+const explicitSkillsDir = parseDirArg();
 const hasHelp = args.includes('--help') || args.includes('-h');
 
 console.log(banner);
@@ -62,6 +83,8 @@ if (hasHelp) {
     ${cyan}-g, --global${reset}              Install globally (to Claude config directory)
     ${cyan}-l, --local${reset}               Install locally (to ./.claude in current directory)
     ${cyan}-c, --config-dir <path>${reset}   Specify custom Claude config directory
+    ${cyan}    --skills-dir${reset}          Install as a Claude Code skills-directory plugin
+    ${cyan}    --dir <path>${reset}          Target directory for --skills-dir (default: ./.claude/skills/paul)
     ${cyan}-h, --help${reset}                Show this help message
 
   ${yellow}Examples:${reset}
@@ -73,6 +96,12 @@ if (hasHelp) {
 
     ${dim}# Install to current project only${reset}
     npx paul-framework --local
+
+    ${dim}# Install as a skills-directory plugin (default path: ./.claude/skills/paul)${reset}
+    npx paul-framework --skills-dir
+
+    ${dim}# Install as a skills-directory plugin to a custom path${reset}
+    npx paul-framework --skills-dir --dir /path/to/skills/paul
 
   ${yellow}What gets installed:${reset}
     commands/paul/     - Slash commands (/paul:init, /paul:plan, etc.)
@@ -114,6 +143,98 @@ function copyWithPathReplacement(srcDir, destDir, pathPrefix) {
       fs.copyFileSync(srcPath, destPath);
     }
   }
+}
+
+/**
+ * Recursively copy directory, rewriting paul-framework refs for skills-dir plugin.
+ * Replaces @~/.claude/paul-framework/ with ${CLAUDE_PLUGIN_ROOT}/paul-framework/
+ * Leaves @.paul/ and all other project-relative refs untouched.
+ */
+function copyWithPluginRootReplacement(srcDir, destDir) {
+  fs.mkdirSync(destDir, { recursive: true });
+
+  const entries = fs.readdirSync(srcDir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const srcPath = path.join(srcDir, entry.name);
+    const destPath = path.join(destDir, entry.name);
+
+    if (entry.isDirectory()) {
+      copyWithPluginRootReplacement(srcPath, destPath);
+    } else if (entry.name.endsWith('.md')) {
+      let content = fs.readFileSync(srcPath, 'utf8');
+      // Rewrite only paul-framework refs; leave @.paul/ project-state refs intact
+      content = content.replace(
+        /@~\/\.claude\/paul-framework\//g,
+        '@${CLAUDE_PLUGIN_ROOT}/paul-framework/'
+      );
+      fs.writeFileSync(destPath, content);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
+/**
+ * Install as a Claude Code skills-directory plugin.
+ * Target layout:
+ *   <skillsDir>/
+ *     .claude-plugin/plugin.json
+ *     commands/           (paul slash commands)
+ *     paul-framework/     (templates, workflows, references, rules)
+ */
+function installSkillsDir() {
+  const src = path.join(__dirname, '..');
+
+  const skillsDir = expandTilde(explicitSkillsDir) ||
+    path.join(process.cwd(), '.claude', 'skills', 'paul');
+
+  const locationLabel = skillsDir.startsWith(os.homedir())
+    ? skillsDir.replace(os.homedir(), '~')
+    : skillsDir.replace(process.cwd(), '.');
+
+  console.log(`  Installing skills-dir plugin to ${cyan}${locationLabel}${reset}\n`);
+
+  // Create root
+  fs.mkdirSync(skillsDir, { recursive: true });
+
+  // Write .claude-plugin/plugin.json
+  const pluginDir = path.join(skillsDir, '.claude-plugin');
+  fs.mkdirSync(pluginDir, { recursive: true });
+  const pluginJson = {
+    name: 'paul',
+    version: pkg.version,
+    description: pkg.description
+  };
+  fs.writeFileSync(
+    path.join(pluginDir, 'plugin.json'),
+    JSON.stringify(pluginJson, null, 2) + '\n'
+  );
+  console.log(`  ${green}✓${reset} Wrote .claude-plugin/plugin.json`);
+
+  // Copy commands
+  const commandsSrc = path.join(src, 'src', 'commands');
+  const commandsDest = path.join(skillsDir, 'commands');
+  copyWithPluginRootReplacement(commandsSrc, commandsDest);
+  console.log(`  ${green}✓${reset} Installed commands/`);
+
+  // Copy paul-framework subdirs
+  const frameworkDest = path.join(skillsDir, 'paul-framework');
+  fs.mkdirSync(frameworkDest, { recursive: true });
+
+  const srcDirs = ['templates', 'workflows', 'references', 'rules'];
+  for (const dir of srcDirs) {
+    const dirSrc = path.join(src, 'src', dir);
+    const dirDest = path.join(frameworkDest, dir);
+    if (fs.existsSync(dirSrc)) {
+      copyWithPluginRootReplacement(dirSrc, dirDest);
+    }
+  }
+  console.log(`  ${green}✓${reset} Installed paul-framework/`);
+
+  console.log(`
+  ${green}Done!${reset} Loads next session as paul@skills-dir (no marketplace/install). Trust the workspace if prompted. For Claude Code Cloud, commit .claude/skills/paul/.
+`);
 }
 
 /**
@@ -195,12 +316,17 @@ function promptLocation() {
 }
 
 // Main
-if (hasGlobal && hasLocal) {
+if (hasSkillsDir && (hasGlobal || hasLocal)) {
+  console.error(`  ${yellow}Cannot combine --skills-dir with --global or --local${reset}`);
+  process.exit(1);
+} else if (hasGlobal && hasLocal) {
   console.error(`  ${yellow}Cannot specify both --global and --local${reset}`);
   process.exit(1);
 } else if (explicitConfigDir && hasLocal) {
   console.error(`  ${yellow}Cannot use --config-dir with --local${reset}`);
   process.exit(1);
+} else if (hasSkillsDir) {
+  installSkillsDir();
 } else if (hasGlobal) {
   install(true);
 } else if (hasLocal) {
